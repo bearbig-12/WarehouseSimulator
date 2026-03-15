@@ -1,3 +1,4 @@
+Server/node_modules/
 # Node.js
 Server/node_modules/
 
@@ -6,6 +7,8 @@ Warehouse/Library/
 Warehouse/Temp/
 Warehouse/Logs/
 Warehouse/UserSettings/
+Warehouse/*.sln
+Warehouse/*.csproj
 Warehouse/obj/
 
 # This .gitignore file should be placed at the root of your Unity project directory
