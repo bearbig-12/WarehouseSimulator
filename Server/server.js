@@ -25,49 +25,59 @@ const db = mysql.createPool({
 
 // 전체 컨테이너 조회
 app.get('/containers', async (req, res) => {
-    const [rows] = await db.query('SELECT * FROM containers');
-    res.json(rows);
+    try {
+        const [rows] = await db.query('SELECT * FROM containers');
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 특정 슬롯 조회
 app.get('/containers/:shelf/:floor/:slot', async (req, res) => {
-    const { shelf, floor, slot } = req.params;
-    const [rows] = await db.query(
-        'SELECT * FROM containers WHERE shelf=? AND floor=? AND slot=?',
-        [shelf, floor, slot]
-    );
-    res.json(rows[0] || null);
+    try {
+        const { shelf, floor, slot } = req.params;
+        const [rows] = await db.query(
+            'SELECT * FROM containers WHERE shelf=? AND floor=? AND slot=?',
+            [shelf, floor, slot]
+        );
+        res.json(rows[0] || null);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 컨테이너 입고
 app.post('/containers', async (req, res) => {
-    const { container_id, item_name, weight, arrival_date, shelf, floor, slot } = req.body;
-    await db.query(
-        'INSERT INTO containers (container_id, item_name, weight, arrival_date, shelf, floor, slot) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [container_id, item_name, weight, arrival_date, shelf, floor, slot]
-    );
-    io.emit('containerAdded', req.body);      // 웹에 실시간 전송
-    res.json({ success: true });
+    try {
+        const { container_id, item_name, weight, arrival_date, shelf, floor, slot } = req.body;
+        await db.query(
+            'INSERT INTO containers (container_id, item_name, weight, arrival_date, shelf, floor, slot) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [container_id, item_name, weight, arrival_date, shelf, floor, slot]
+        );
+        io.emit('containerAdded', req.body);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 컨테이너 이동
 app.patch('/containers/:id/move', async (req, res) => {
-    const { id } = req.params;
-    const { shelf, floor, slot } = req.body;
-    await db.query(
-        'UPDATE containers SET shelf=?, floor=?, slot=? WHERE container_id=?',
-        [shelf, floor, slot, id]
-    );
-    io.emit('containerMoved', { container_id: id, shelf, floor, slot });  // 실시간 전송
-    res.json({ success: true });
+    try {
+        const { id } = req.params;
+        const { shelf, floor, slot } = req.body;
+        await db.query(
+            'UPDATE containers SET shelf=?, floor=?, slot=? WHERE container_id=?',
+            [shelf, floor, slot, id]
+        );
+        io.emit('containerMoved', { container_id: id, shelf, floor, slot });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 컨테이너 출고
 app.delete('/containers/:id', async (req, res) => {
-    const { id } = req.params;
-    await db.query('DELETE FROM containers WHERE container_id=?', [id]);
-    io.emit('containerRemoved', { container_id: id });
-    res.json({ success: true });
+    try {
+        const { id } = req.params;
+        await db.query('DELETE FROM containers WHERE container_id=?', [id]);
+        io.emit('containerRemoved', { container_id: id });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ───────────────────────────────────────────

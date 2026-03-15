@@ -12,19 +12,39 @@ namespace UnityWarehouseSceneHDRP
         [Header("컨테이너 정보 (없으면 비어있음)")]
         public ContainerData container;
 
-        public bool IsEmpty => container == null;
+        public bool IsEmpty => container == null || string.IsNullOrEmpty(container.containerId);
 
         // Inspector에서 이름 기반으로 위치 자동 파싱
-        // 이름 형식: Pallet_A_0_3
+        // 이름 형식: Pallet_A_0_3 또는 Pallet_0_3 (shelf는 부모에서 파싱)
         public void ParseNameToPosition()
         {
             string[] parts = gameObject.name.Split('_');
             if (parts.Length >= 4)
             {
+                // Pallet_A_0_3 형식
                 shelf = parts[1];
                 int.TryParse(parts[2], out floor);
                 int.TryParse(parts[3], out slot);
             }
+            else if (parts.Length >= 3)
+            {
+                // Pallet_0_3 형식 → shelf는 부모 계층에서 찾기 (Shelf_A)
+                int.TryParse(parts[1], out floor);
+                int.TryParse(parts[2], out slot);
+                shelf = GetShelfFromParent();
+            }
+        }
+
+        private string GetShelfFromParent()
+        {
+            Transform t = transform.parent;
+            while (t != null)
+            {
+                if (t.name.StartsWith("Shelf_") && t.name.Length > 6)
+                    return t.name.Substring(6, 1); // "Shelf_A" → "A"
+                t = t.parent;
+            }
+            return "";
         }
 
         // 컨테이너 배치 (입고)
@@ -63,9 +83,13 @@ namespace UnityWarehouseSceneHDRP
             }
 
             var data = RemoveContainer();
-            targetSlot.PlaceContainer(data);
+            targetSlot.container       = data;
+            targetSlot.container.shelf = targetSlot.shelf;
+            targetSlot.container.floor = targetSlot.floor;
+            targetSlot.container.slot  = targetSlot.slot;
             DatabaseManager.Instance.UpdateContainerPosition(
                 data.containerId, targetSlot.shelf, targetSlot.floor, targetSlot.slot);
+            Debug.Log($"[{gameObject.name}] → [{targetSlot.gameObject.name}] 이동: {data.containerId}");
         }
 
         private void OnValidate()
