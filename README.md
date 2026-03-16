@@ -115,7 +115,7 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 **추가된 기능**
 
 - **박스 시각화**: 입고 시 `PlasticBox_A` 프리팹을 팔레트 슬롯 위에 생성, 출고/이동 시 제거
-- **오브젝트 풀링**: `BoxPool`로 PlasticBox_A를 미리 96개 생성해두고 재사용 (Instantiate/Destroy 대신)
+- **오브젝트 풀링**: `BoxPool`로 PlasticBox_A를 미리 96개 생성해두고 재사용 (상세 내용은 아래 참고)
 - **크기 데이터**: 컨테이너에 가로(width) / 세로(depth) / 높이(height) 필드 추가, DB 반영
 - **InfoPanel 크기 표시**: 컨테이너 정보 팝업에 `크기: W × D × H m` 표시
 
@@ -132,6 +132,40 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 
 - 팝업 열릴 때 `CameraMove` / `PalletClickHandler` 자동 비활성화 → 키보드 입력 시 플레이어 이동 방지, 팔레트 오클릭 방지
 - 크기 입력 필드 플레이스홀더 표시 (기본값 1 자동 입력 제거)
+
+---
+
+## 오브젝트 풀링 (BoxPool)
+
+### 도입 배경
+
+입고/출고/이동이 발생할 때마다 `Instantiate` / `Destroy`로 박스 오브젝트를 생성·삭제하면 다음 문제가 생긴다:
+
+- **GC 스파이크**: Destroy 시 가비지가 누적되어 프레임 드랍 발생 가능
+- **반복 로딩**: 매번 프리팹을 새로 인스턴스화하는 비용 발생
+
+### 동작 방식
+
+```
+씬 시작 시 PlasticBox_A × 96개 미리 생성 → 비활성화 상태로 BoxPool_Root 하위에 대기
+
+입고 시  → BoxPool.Get()   : 풀에서 꺼내 활성화 → 팔레트 하위에 배치
+출고/이동 시 → BoxPool.Return() : 비활성화 → BoxPool_Root 하위로 이동 → 풀에 반환
+```
+
+### 풀 크기 기준
+
+| 항목 | 값 |
+|---|---|
+| 기본 풀 크기 | 96개 |
+| 계산 기준 | Shelf 4열 × Floor 3층 × Slot 8개 = 96 (최대 동시 박스 수) |
+| 풀 부족 시 | 자동으로 새 오브젝트 생성 후 반환 |
+
+### 씬 설정 방법
+
+1. 빈 오브젝트 생성 → 이름 `BoxPool`
+2. `BoxPool` 컴포넌트 추가
+3. Inspector에서 **Box Prefab** 슬롯에 `PlasticBox_A` 프리팹 연결
 
 ---
 
