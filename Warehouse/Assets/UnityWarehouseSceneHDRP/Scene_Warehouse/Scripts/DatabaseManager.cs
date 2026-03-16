@@ -127,6 +127,9 @@ namespace UnityWarehouseSceneHDRP
             public string shelf;
             public int    floor;
             public int    slot;
+            public float  width;
+            public float  depth;
+            public float  height;
 
             public ContainerJson(ContainerData d)
             {
@@ -137,6 +140,9 @@ namespace UnityWarehouseSceneHDRP
                 shelf        = d.shelf;
                 floor        = d.floor;
                 slot         = d.slot;
+                width        = d.width;
+                depth        = d.depth;
+                height       = d.height;
             }
         }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using System.Text.RegularExpressions;
 
 namespace UnityWarehouseSceneHDRP
 {
@@ -17,18 +18,26 @@ namespace UnityWarehouseSceneHDRP
         [SerializeField] private TMP_Text   infoNameText;
         [SerializeField] private TMP_Text   infoWeightText;
         [SerializeField] private TMP_Text   infoDateText;
+        [SerializeField] private TMP_Text   infoSizeText;  // 가로 × 세로 × 높이
 
         [Header("입고 입력 필드 (비어있을 때)")]
         [SerializeField] private GameObject  inputPanel;
         [SerializeField] private TMP_InputField inputId;
         [SerializeField] private TMP_InputField inputName;
         [SerializeField] private TMP_InputField inputWeight;
+        [SerializeField] private TMP_InputField inputWidth;
+        [SerializeField] private TMP_InputField inputDepth;
+        [SerializeField] private TMP_InputField inputHeight;
 
         [Header("버튼")]
         [SerializeField] private Button btnIncoming;   // 입고
         [SerializeField] private Button btnMove;       // 이동
         [SerializeField] private Button btnOutgoing;   // 출고
         [SerializeField] private Button btnClose;      // 닫기
+
+        [Header("입력 잠금 대상")]
+        [SerializeField] private MonoBehaviour cameraMove;        // CameraMove 컴포넌트
+        [SerializeField] private MonoBehaviour palletClickHandler; // PalletClickHandler 컴포넌트
 
         private PalletSlot _currentSlot;
         private PalletSlot _moveSourceSlot;   // 이동 중일 때 출발 슬롯
@@ -40,6 +49,12 @@ namespace UnityWarehouseSceneHDRP
             btnMove.onClick.AddListener(OnMove);
             btnOutgoing.onClick.AddListener(OnOutgoing);
             btnClose.onClick.AddListener(ClosePopup);
+
+            // 숫자 전용 InputField 설정
+            inputWeight.contentType = TMP_InputField.ContentType.DecimalNumber;
+            inputWidth.contentType  = TMP_InputField.ContentType.DecimalNumber;
+            inputDepth.contentType  = TMP_InputField.ContentType.DecimalNumber;
+            inputHeight.contentType = TMP_InputField.ContentType.DecimalNumber;
         }
 
         // 팔레트 클릭 시 호출
@@ -70,15 +85,20 @@ namespace UnityWarehouseSceneHDRP
                 infoNameText.text   = $"물건: {slot.container.itemName}";
                 infoWeightText.text = $"무게: {slot.container.weight} kg";
                 infoDateText.text   = $"입고일: {slot.container.arrivalDate}";
+                infoSizeText.text   = $"크기: {slot.container.width} × {slot.container.depth} × {slot.container.height} m";
             }
             else
             {
                 inputId.text     = "";
                 inputName.text   = "";
                 inputWeight.text = "";
+                inputWidth.text  = "";
+                inputDepth.text  = "";
+                inputHeight.text = "";
             }
 
             popupPanel.SetActive(true);
+            SetInputLock(true);
         }
 
         // 입고
@@ -90,7 +110,29 @@ namespace UnityWarehouseSceneHDRP
                 return;
             }
 
-            float weight = float.TryParse(inputWeight.text, out float w) ? w : 0f;
+            // ID 형식 체크 (CNT-000 ~ CNT-999)
+            if (!Regex.IsMatch(inputId.text, @"^CNT-\d{3}$"))
+            {
+                Debug.LogWarning("ID 형식이 올바르지 않습니다. 예: CNT-001");
+                inputId.text = "";
+                return;
+            }
+
+            // 중복 ID 체크
+            foreach (var s in FindObjectsByType<PalletSlot>(FindObjectsSortMode.None))
+            {
+                if (!s.IsEmpty && s.container.containerId == inputId.text)
+                {
+                    Debug.LogWarning($"이미 존재하는 컨테이너 ID입니다: {inputId.text}");
+                    inputId.text = "";
+                    return;
+                }
+            }
+
+            float weight = float.TryParse(inputWeight.text, out float w)  ? w  : 0f;
+            float width  = Mathf.Clamp(float.TryParse(inputWidth.text,  out float wx) ? wx : 1f, 0.1f, 5f);
+            float depth  = Mathf.Clamp(float.TryParse(inputDepth.text,  out float d)  ? d  : 1f, 0.1f, 5f);
+            float height = Mathf.Clamp(float.TryParse(inputHeight.text, out float h)  ? h  : 1f, 0.1f, 5f);
 
             var data = new ContainerData(
                 inputId.text,
@@ -99,7 +141,8 @@ namespace UnityWarehouseSceneHDRP
                 DateTime.Now.ToString("yyyy-MM-dd"),
                 _currentSlot.shelf,
                 _currentSlot.floor,
-                _currentSlot.slot
+                _currentSlot.slot,
+                width, depth, height
             );
 
             _currentSlot.PlaceContainer(data);
@@ -127,6 +170,13 @@ namespace UnityWarehouseSceneHDRP
         {
             _moveSourceSlot = null;
             popupPanel.SetActive(false);
+            SetInputLock(false);
+        }
+
+        private void SetInputLock(bool locked)
+        {
+            if (cameraMove        != null) cameraMove.enabled        = !locked;
+            if (palletClickHandler != null) palletClickHandler.enabled = !locked;
         }
     }
 }

@@ -46,10 +46,10 @@ app.get('/containers/:shelf/:floor/:slot', async (req, res) => {
 // 컨테이너 입고
 app.post('/containers', async (req, res) => {
     try {
-        const { container_id, item_name, weight, arrival_date, shelf, floor, slot } = req.body;
+        const { container_id, item_name, weight, arrival_date, shelf, floor, slot, width = 1.0, depth = 1.0, height = 1.0 } = req.body;
         await db.query(
-            'INSERT INTO containers (container_id, item_name, weight, arrival_date, shelf, floor, slot) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [container_id, item_name, weight, arrival_date, shelf, floor, slot]
+            'INSERT INTO containers (container_id, item_name, weight, arrival_date, shelf, floor, slot, width, depth, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [container_id, item_name, weight, arrival_date, shelf, floor, slot, width, depth, height]
         );
         io.emit('containerAdded', req.body);
         res.json({ success: true });

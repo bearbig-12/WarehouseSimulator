@@ -14,6 +14,13 @@ namespace UnityWarehouseSceneHDRP
 
         public bool IsEmpty => container == null || string.IsNullOrEmpty(container.containerId);
 
+        private BoxVisualizer _visualizer;
+
+        private void Awake()
+        {
+            _visualizer = GetComponent<BoxVisualizer>();
+        }
+
         // Inspector에서 이름 기반으로 위치 자동 파싱
         // 이름 형식: Pallet_A_0_3 또는 Pallet_0_3 (shelf는 부모에서 파싱)
         public void ParseNameToPosition()
@@ -55,6 +62,7 @@ namespace UnityWarehouseSceneHDRP
             container.floor = floor;
             container.slot  = slot;
             DatabaseManager.Instance.InsertContainer(container);
+            if (_visualizer != null) _visualizer.SpawnBox(data.width, data.depth, data.height);
             Debug.Log($"[{gameObject.name}] 입고: {data.containerId}");
         }
 
@@ -63,6 +71,7 @@ namespace UnityWarehouseSceneHDRP
         {
             var data = container;
             container = null;
+            if (_visualizer != null) _visualizer.ReturnBox();
             if (deleteFromDB && data != null)
                 DatabaseManager.Instance.DeleteContainer(data.containerId);
             return data;
@@ -82,11 +91,12 @@ namespace UnityWarehouseSceneHDRP
                 return;
             }
 
-            var data = RemoveContainer();
+            var data = RemoveContainer(); // 박스 제거 포함
             targetSlot.container       = data;
             targetSlot.container.shelf = targetSlot.shelf;
             targetSlot.container.floor = targetSlot.floor;
             targetSlot.container.slot  = targetSlot.slot;
+            if (targetSlot._visualizer != null) targetSlot._visualizer.SpawnBox(data.width, data.depth, data.height); // 목적지에 박스 생성
             DatabaseManager.Instance.UpdateContainerPosition(
                 data.containerId, targetSlot.shelf, targetSlot.floor, targetSlot.slot);
             Debug.Log($"[{gameObject.name}] → [{targetSlot.gameObject.name}] 이동: {data.containerId}");

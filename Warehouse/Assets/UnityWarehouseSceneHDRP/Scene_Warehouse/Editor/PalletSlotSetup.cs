@@ -29,6 +29,9 @@ namespace UnityWarehouseSceneHDRP
                         if (slot == null)
                             slot = pallet.gameObject.AddComponent<PalletSlot>();
 
+                        if (pallet.gameObject.GetComponent<BoxVisualizer>() == null)
+                            pallet.gameObject.AddComponent<BoxVisualizer>();
+
                         slot.ParseNameToPosition();
                         EditorUtility.SetDirty(pallet.gameObject);
                         count++;

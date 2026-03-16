@@ -12,11 +12,15 @@ namespace UnityWarehouseSceneHDRP
         public string shelf;         // 열 (A/B/C/D)
         public int    floor;         // 층 (0/1/2)
         public int    slot;          // 슬롯 (0~7)
+        public float  width;         // 가로 (m)
+        public float  depth;         // 세로 (m)
+        public float  height;        // 높이 (m)
 
         public ContainerData() { }
 
         public ContainerData(string containerId, string itemName, float weight,
-                             string arrivalDate, string shelf, int floor, int slot)
+                             string arrivalDate, string shelf, int floor, int slot,
+                             float width = 1f, float depth = 1f, float height = 1f)
         {
             this.containerId = containerId;
             this.itemName    = itemName;
@@ -25,6 +29,9 @@ namespace UnityWarehouseSceneHDRP
             this.shelf       = shelf;
             this.floor       = floor;
             this.slot        = slot;
+            this.width       = width;
+            this.depth       = depth;
+            this.height      = height;
         }
     }
 }
