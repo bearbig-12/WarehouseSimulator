@@ -131,7 +131,6 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 **UI/조작 개선**
 
 - 팝업 열릴 때 `CameraMove` / `PalletClickHandler` 자동 비활성화 → 키보드 입력 시 플레이어 이동 방지, 팔레트 오클릭 방지
-- 크기 입력 필드 플레이스홀더 표시 (기본값 1 자동 입력 제거)
 
 ---
 
