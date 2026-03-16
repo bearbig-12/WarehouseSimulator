@@ -9,8 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7279301128213619813}
-  - component: {fileID: 1117805446446529249}
-  - component: {fileID: -6652897477416049411}
   m_Layer: 6
   m_Name: Pallet
   m_TagString: Untagged
@@ -34,45 +32,6 @@ Transform:
   - {fileID: 5839226216595437551}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1117805446446529249
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7948454647255383775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c91d2dd6b495d4441abce41e375aee84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shelf: A
-  floor: 0
-  slot: 0
-  container:
-    containerId: 
-    itemName: 
-    weight: 0
-    arrivalDate: 
-    shelf: 
-    floor: 0
-    slot: 0
-    width: 0
-    depth: 0
-    height: 0
---- !u!114 &-6652897477416049411
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7948454647255383775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 607f8cc778d808d45bb28576041a2f12, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  boxMaterial: {fileID: 0}
 --- !u!1001 &6234002450348298244
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -110,6 +110,26 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 
 ## 개발 일지
 
+### 2026-03-17 — DB 동기화 (게임 시작 시 컨테이너 자동 복원)
+
+**추가된 기능**
+
+- **WarehouseLoader**: 게임 시작 시 DB에서 전체 컨테이너 데이터를 조회해 해당 팔레트 슬롯에 자동 복원
+- **DB 동기화 흐름**: `GET /containers` → shelf/floor/slot 키로 PalletSlot 매핑 → `LoadContainer()` 호출 (DB 재삽입 없음)
+- **PalletSlot.LoadContainer()**: 게임 시작 시 전용 복원 메서드 추가 (InsertContainer 호출 안 함)
+- **DatabaseManager.LoadAllContainers()**: JSON 배열 파싱 후 ContainerData 배열로 반환
+
+**버그 수정**
+
+- `Pallet` 프리팹 자식에 PalletSlot이 중복으로 붙어 `GetComponentInParent`가 잘못된 슬롯을 반환하던 문제 수정
+- `PalletClickHandler`를 shelf 정보가 있는 PalletSlot을 찾을 때까지 부모 방향으로 탐색하도록 개선
+
+**씬 설정**
+
+- 빈 오브젝트 `WarehouseLoader` 생성 후 `WarehouseLoader` 컴포넌트 추가
+
+---
+
 ### 2026-03-16 — 박스 시각화 & UI 개선
 
 **추가된 기능**

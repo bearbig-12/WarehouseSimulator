@@ -33,6 +33,21 @@ namespace UnityWarehouseSceneHDRP
             }));
         }
 
+        // 전체 컨테이너 로드 (게임 시작 시 DB 동기화용)
+        public void LoadAllContainers(System.Action<ContainerData[]> callback)
+        {
+            StartCoroutine(Get("/containers", (json) =>
+            {
+                // JsonUtility는 배열 직접 파싱 불가 → 래퍼로 감싸기
+                string wrapped = "{\"items\":" + json + "}";
+                var wrapper = JsonUtility.FromJson<ContainerListWrapper>(wrapped);
+                var result = new ContainerData[wrapper.items.Length];
+                for (int i = 0; i < wrapper.items.Length; i++)
+                    result[i] = wrapper.items[i].ToContainerData();
+                callback(result);
+            }));
+        }
+
         // 컨테이너 입고
         public void InsertContainer(ContainerData data)
         {
@@ -144,6 +159,32 @@ namespace UnityWarehouseSceneHDRP
                 depth        = d.depth;
                 height       = d.height;
             }
+        }
+
+        // LoadAllContainers용 서버 응답 파싱 클래스 (snake_case)
+        [System.Serializable]
+        private class ContainerResponseItem
+        {
+            public string container_id;
+            public string item_name;
+            public float  weight;
+            public string arrival_date;
+            public string shelf;
+            public int    floor;
+            public int    slot;
+            public float  width;
+            public float  depth;
+            public float  height;
+
+            public ContainerData ToContainerData() => new ContainerData(
+                container_id, item_name, weight, arrival_date, shelf, floor, slot, width, depth, height
+            );
+        }
+
+        [System.Serializable]
+        private class ContainerListWrapper
+        {
+            public ContainerResponseItem[] items;
         }
 
         [System.Serializable]
