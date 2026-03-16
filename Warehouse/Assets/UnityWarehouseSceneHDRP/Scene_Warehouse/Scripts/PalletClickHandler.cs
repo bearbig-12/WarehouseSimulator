@@ -15,7 +15,21 @@ namespace UnityWarehouseSceneHDRP
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, 100f, palletLayer))
             {
-                PalletSlot slot = hit.collider.GetComponentInParent<PalletSlot>();
+                // shelf 정보가 있는 PalletSlot을 찾을 때까지 부모 방향으로 탐색
+                // (Pallet 프리팹 자체에도 PalletSlot이 붙어있을 경우 건너뜀)
+                PalletSlot slot = null;
+                Transform t = hit.collider.transform;
+                while (t != null)
+                {
+                    var ps = t.GetComponent<PalletSlot>();
+                    if (ps != null && !string.IsNullOrEmpty(ps.shelf))
+                    {
+                        slot = ps;
+                        break;
+                    }
+                    t = t.parent;
+                }
+
                 if (slot != null)
                     warehouseUI.OpenPopup(slot);
             }

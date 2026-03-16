@@ -54,6 +54,14 @@ namespace UnityWarehouseSceneHDRP
             return "";
         }
 
+        // 게임 시작 시 DB 데이터로 슬롯 복원 (DB 쓰기 없음)
+        public void LoadContainer(ContainerData data)
+        {
+            container = data;
+            if (_visualizer != null) _visualizer.SpawnBox(data.width, data.depth, data.height);
+            Debug.Log($"[{gameObject.name}] DB 복원: {data.containerId}");
+        }
+
         // 컨테이너 배치 (입고)
         public void PlaceContainer(ContainerData data)
         {
