@@ -29,17 +29,37 @@ WarehouseSimulator/
 
 ```
 Unity (씬)
-    └─ PalletSlot 컴포넌트 (각 팔레트)
+    └─ PalletSlot + BoxVisualizer (각 팔레트)
          ↓ 입고 / 이동 / 출고 이벤트
-    HTTP 요청 (UnityWebRequest)
-         ↓
-    API 서버 (Python / Node.js 예정)
+    DatabaseManager (UnityWebRequest)
+         ↓ HTTP REST API
+    Node.js + Express 서버 (포트 3000)
          ↓
     MySQL DB (warehouse_db)
 ```
 
 > Unity에서 MySQL을 직접 연결하지 않고 중간에 API 서버를 두는 방식 채택
 > 이유는 아래 트러블슈팅 참고
+
+---
+
+## 서버 실행 방법
+
+```bash
+cd Server
+node server.js
+# 서버 실행 중: http://localhost:3000
+```
+
+DB 데이터 확인:
+```
+브라우저에서 http://localhost:3000/containers 접속
+```
+
+DB 데이터 초기화 (MySQL Workbench):
+```sql
+TRUNCATE TABLE warehouse_db.containers;
+```
 
 ---
 
@@ -56,9 +76,62 @@ CREATE TABLE containers (
     arrival_date DATE,
     shelf        CHAR(1),   -- A/B/C/D
     floor        INT,       -- 0/1/2
-    slot         INT        -- 0~7
+    slot         INT,       -- 0~7
+    width        FLOAT DEFAULT 1.0,
+    depth        FLOAT DEFAULT 1.0,
+    height       FLOAT DEFAULT 1.0
 );
 ```
+
+컬럼 추가 (기존 DB 업그레이드 시):
+```sql
+ALTER TABLE containers
+ADD COLUMN width  FLOAT DEFAULT 1.0,
+ADD COLUMN depth  FLOAT DEFAULT 1.0,
+ADD COLUMN height FLOAT DEFAULT 1.0;
+```
+
+---
+
+## 주요 스크립트
+
+| 스크립트 | 위치 | 역할 |
+|---|---|---|
+| `DatabaseManager.cs` | Scene_Warehouse/Scripts | HTTP API 호출 (입고/이동/출고) |
+| `PalletSlot.cs` | Scene_Warehouse/Scripts | 팔레트 슬롯 상태 및 컨테이너 관리 |
+| `BoxVisualizer.cs` | Scene_Warehouse/Scripts | 팔레트에 박스 오브젝트 생성/반환 |
+| `BoxPool.cs` | Scene_Warehouse/Scripts | PlasticBox_A 오브젝트 풀 관리 |
+| `WarehouseUI.cs` | Scene_Warehouse/Scripts | 팝업 UI (입고/이동/출고/정보 표시) |
+| `PalletClickHandler.cs` | Scene_Warehouse/Scripts | 마우스 클릭으로 팔레트 선택 |
+| `PalletSlotSetup.cs` | Scene_Warehouse/Editor | 에디터 툴: 팔레트 컴포넌트 일괄 설정 |
+| `CameraMove.cs` | Player/Scripts | 1인칭 카메라 이동 (WASD + 마우스) |
+
+---
+
+## 개발 일지
+
+### 2026-03-16 — 박스 시각화 & UI 개선
+
+**추가된 기능**
+
+- **박스 시각화**: 입고 시 `PlasticBox_A` 프리팹을 팔레트 슬롯 위에 생성, 출고/이동 시 제거
+- **오브젝트 풀링**: `BoxPool`로 PlasticBox_A를 미리 96개 생성해두고 재사용 (Instantiate/Destroy 대신)
+- **크기 데이터**: 컨테이너에 가로(width) / 세로(depth) / 높이(height) 필드 추가, DB 반영
+- **InfoPanel 크기 표시**: 컨테이너 정보 팝업에 `크기: W × D × H m` 표시
+
+**입력 검증**
+
+| 항목 | 규칙 |
+|---|---|
+| 컨테이너 ID | `CNT-000` ~ `CNT-999` 형식만 허용 |
+| 중복 ID | 씬 내 동일 ID 존재 시 입고 차단 |
+| 박스 크기 | 최대 5 × 5 × 5 m (초과 시 자동 클램프) |
+| 무게 / 크기 입력 | 숫자(소수점)만 입력 가능 |
+
+**UI/조작 개선**
+
+- 팝업 열릴 때 `CameraMove` / `PalletClickHandler` 자동 비활성화 → 키보드 입력 시 플레이어 이동 방지, 팔레트 오클릭 방지
+- 크기 입력 필드 플레이스홀더 표시 (기본값 1 자동 입력 제거)
 
 ---
 
