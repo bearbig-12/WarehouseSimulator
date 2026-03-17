@@ -54,6 +54,13 @@ namespace UnityWarehouseSceneHDRP
             return "";
         }
 
+        // 폴링 동기화 시 슬롯 비우기 (DB 쓰기 없음)
+        public void ClearContainer()
+        {
+            container = null;
+            if (_visualizer != null) _visualizer.ReturnBox();
+        }
+
         // 게임 시작 시 DB 데이터로 슬롯 복원 (DB 쓰기 없음)
         public void LoadContainer(ContainerData data)
         {

@@ -10,20 +10,26 @@ namespace UnityWarehouseSceneHDRP
     /// </summary>
     public class WarehouseLoader : MonoBehaviour
     {
+        [SerializeField] private float pollInterval = 3f;
+
         private IEnumerator Start()
         {
             // BoxPool.Awake() / DatabaseManager.Awake() 완료 대기
             yield return null;
 
             DatabaseManager.Instance.LoadAllContainers(OnLoaded);
+
+            // WinForms 등 외부 변경 실시간 반영 폴링
+            while (true)
+            {
+                yield return new WaitForSeconds(pollInterval);
+                DatabaseManager.Instance.LoadAllContainers(OnRefresh);
+            }
         }
 
         private void OnLoaded(ContainerData[] containers)
         {
-            // shelf-floor-slot 키로 빠르게 슬롯 검색
-            var slotMap = new Dictionary<string, PalletSlot>();
-            foreach (var slot in FindObjectsByType<PalletSlot>(FindObjectsSortMode.None))
-                slotMap[$"{slot.shelf}_{slot.floor}_{slot.slot}"] = slot;
+            var slotMap = BuildSlotMap();
 
             int loaded = 0;
             foreach (var data in containers)
@@ -41,6 +47,40 @@ namespace UnityWarehouseSceneHDRP
             }
 
             Debug.Log($"[WarehouseLoader] {loaded}/{containers.Length}개 컨테이너 복원 완료");
+        }
+
+        // 폴링: DB 상태와 씬 동기화
+        private void OnRefresh(ContainerData[] containers)
+        {
+            var slotMap   = BuildSlotMap();
+            var dbIds     = new HashSet<string>();
+
+            // DB에 있는 컨테이너 반영
+            foreach (var data in containers)
+            {
+                dbIds.Add(data.containerId);
+                string key = $"{data.shelf}_{data.floor}_{data.slot}";
+                if (!slotMap.TryGetValue(key, out PalletSlot slot)) continue;
+
+                // 같은 컨테이너면 스킵, 다르면 갱신
+                if (!slot.IsEmpty && slot.container.containerId == data.containerId) continue;
+                slot.LoadContainer(data);
+            }
+
+            // DB에 없는 컨테이너는 슬롯에서 제거
+            foreach (var slot in slotMap.Values)
+            {
+                if (!slot.IsEmpty && !dbIds.Contains(slot.container.containerId))
+                    slot.ClearContainer();
+            }
+        }
+
+        private Dictionary<string, PalletSlot> BuildSlotMap()
+        {
+            var map = new Dictionary<string, PalletSlot>();
+            foreach (var slot in FindObjectsByType<PalletSlot>(FindObjectsSortMode.None))
+                map[$"{slot.shelf}_{slot.floor}_{slot.slot}"] = slot;
+            return map;
         }
     }
 }
