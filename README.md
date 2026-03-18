@@ -114,23 +114,60 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 
 ## WinForms 앱 실행 방법
 
-```bash
-cd WinFormsApp
-dotnet run
-```
-
-서버가 먼저 실행되어 있어야 합니다 (`node server.js`).
+Visual Studio 2022에서 `WarehouseWinForms/WarehouseWinForms.slnx` 열고 실행 (서버가 먼저 켜져 있어야 함).
 
 | 기능 | 설명 |
 |---|---|
-| 입고 | CNT-000 형식 ID, 크기(가로/세로/높이) 입력 후 DB 저장 |
-| 이동 | 목록에서 컨테이너 선택 후 이동할 선반/층/슬롯 입력 |
+| 입고 | CNT-000 형식 ID, 품목명, 중량, 크기(가로/세로/높이) 입력 후 DB 저장 |
+| 이동 | 목록에서 컨테이너 선택 후 이동할 선반/층/슬롯 선택 |
 | 출하 | 목록에서 컨테이너 선택 후 확인 |
-| 실시간 | socket.io로 Unity/WinForms 간 즉시 반영 |
+| 실시간 | socket.io로 Unity 조작 시 WinForms 자동 갱신 |
+
+### 실시간 동기화 구조 (socket.io)
+
+```
+[Unity에서 변경]
+Unity → REST API 호출 → 서버
+                         └→ socket.io emit (containerAdded / containerMoved / containerRemoved)
+                               └→ WinForms 수신 → 자동 새로고침
+
+[WinForms에서 변경]
+WinForms → REST API 호출 → 서버
+                            └→ socket.io emit (동일)
+                                  └→ Unity는 3초 폴링으로 반영
+```
+
+- **WinForms → Unity**: REST API 호출 후 Unity가 3초 폴링으로 감지
+- **Unity → WinForms**: 서버가 socket.io로 push → WinForms 즉시 갱신 (버튼 불필요)
+- socket.io는 서버가 클라이언트에게 변경을 능동적으로 알려주는 **push 방식**
+
+### 입력 검증
+
+| 항목 | 규칙 |
+|---|---|
+| 컨테이너 ID | `CNT-000` ~ `CNT-999` 형식만 허용 |
+| 중복 ID | 입고 시 현재 목록에서 중복 체크 후 차단 |
+| 목적지 슬롯 | 이동 시 해당 슬롯 점유 여부 체크 후 차단 |
+| 박스 크기 | 최대 5 × 5 × 5 m (초과 시 자동 클램프) |
 
 ---
 
 ## 개발 일지
+
+### 2026-03-18 — WinForms 대시보드 재작성 (Visual Studio 2022)
+
+**변경 사항**
+
+- **WinForms 프로젝트 재작성**: 기존 dotnet CLI 버전 삭제 후 Visual Studio 2022로 재작성
+  - VS 디자이너로 UI 직접 설계 (Form1, IncomingForm, MoveForm)
+  - `TableLayoutPanel` 기반 레이아웃으로 입고/이동 다이얼로그 구성
+- **입력 검증 강화**
+  - 중복 ID 입고 차단 (현재 목록 기반 체크)
+  - 이동 시 목적지 슬롯 점유 여부 체크
+- **실시간 동기화**: socket.io 클라이언트 연결, 서버 이벤트 수신 시 자동 새로고침
+- **.gitignore**: WinForms `bin/`, `obj/` 빌드 산출물 제외 추가
+
+---
 
 ### 2026-03-17 — WinForms 대시보드 & 실시간 동기화
 
