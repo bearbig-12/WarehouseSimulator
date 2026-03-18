@@ -110,3 +110,8 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# WinForms build output
+WarehouseWinForms/bin/
+WarehouseWinForms/obj/
+WarehouseWinForms/.vs/
