@@ -28,15 +28,18 @@ WarehouseSimulator/
 ## 아키텍처
 
 ```
-Unity (씬)
-    └─ PalletSlot + BoxVisualizer (각 팔레트)
-         ↓ 입고 / 이동 / 출고 이벤트
+WinForms 앱 ──── REST API ──────────┐
+                                    ↓
+Unity (씬)                    Node.js + Express 서버 (포트 3000)
+    └─ PalletSlot + BoxVisualizer        ↕ socket.io (실시간)
+         ↓ 입고 / 이동 / 출고 이벤트  WinForms (실시간 반영)
     DatabaseManager (UnityWebRequest)
-         ↓ HTTP REST API
-    Node.js + Express 서버 (포트 3000)
-         ↓
-    MySQL DB (warehouse_db)
+         ↓ HTTP REST API              ↓
+    Node.js + Express 서버       MySQL DB (warehouse_db)
 ```
+
+- **Unity → WinForms**: Unity에서 조작 시 REST API 호출 → 서버가 socket.io emit → WinForms 실시간 갱신
+- **WinForms → Unity**: WinForms에서 조작 시 REST API 호출 → Unity가 3초마다 폴링으로 반영
 
 > Unity에서 MySQL을 직접 연결하지 않고 중간에 API 서버를 두는 방식 채택
 > 이유는 아래 트러블슈팅 참고
@@ -103,12 +106,44 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 | `BoxPool.cs` | Scene_Warehouse/Scripts | PlasticBox_A 오브젝트 풀 관리 |
 | `WarehouseUI.cs` | Scene_Warehouse/Scripts | 팝업 UI (입고/이동/출고/정보 표시) |
 | `PalletClickHandler.cs` | Scene_Warehouse/Scripts | 마우스 클릭으로 팔레트 선택 |
+| `WarehouseLoader.cs` | Scene_Warehouse/Scripts | 게임 시작 시 DB 복원 + 3초 폴링 동기화 |
 | `PalletSlotSetup.cs` | Scene_Warehouse/Editor | 에디터 툴: 팔레트 컴포넌트 일괄 설정 |
 | `CameraMove.cs` | Player/Scripts | 1인칭 카메라 이동 (WASD + 마우스) |
 
 ---
 
+## WinForms 앱 실행 방법
+
+```bash
+cd WinFormsApp
+dotnet run
+```
+
+서버가 먼저 실행되어 있어야 합니다 (`node server.js`).
+
+| 기능 | 설명 |
+|---|---|
+| 입고 | CNT-000 형식 ID, 크기(가로/세로/높이) 입력 후 DB 저장 |
+| 이동 | 목록에서 컨테이너 선택 후 이동할 선반/층/슬롯 입력 |
+| 출하 | 목록에서 컨테이너 선택 후 확인 |
+| 실시간 | socket.io로 Unity/WinForms 간 즉시 반영 |
+
+---
+
 ## 개발 일지
+
+### 2026-03-17 — WinForms 대시보드 & 실시간 동기화
+
+**추가된 기능**
+
+- **WinForms 앱** (`WinFormsApp/`): .NET 8 WinForms로 창고 관리 데스크탑 앱 구현
+  - DataGridView로 전체 컨테이너 목록 표시
+  - 입고 / 이동 / 출하 기능 (REST API 호출)
+  - socket.io 클라이언트로 실시간 반영 (Unity 조작 시 즉시 갱신)
+- **Unity 폴링**: `WarehouseLoader`에 3초 주기 폴링 추가 → WinForms 조작 내용 자동 반영
+- **PalletSlot.ClearContainer()**: 폴링 동기화 시 DB에 없는 컨테이너 슬롯 초기화
+
+---
 
 ### 2026-03-17 — DB 동기화 (게임 시작 시 컨테이너 자동 복원)
 
