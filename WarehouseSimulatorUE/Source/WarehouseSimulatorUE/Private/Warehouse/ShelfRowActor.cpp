@@ -16,10 +16,16 @@ void AShelfRowActor::BeginPlay()
 	TArray<AActor*> SlotActors;
 	GetAttachedActors(SlotActors);
 
-	// 이름 오름차순 정렬 (PalletSlot1 → index 0, PalletSlot8 → index 7)
+	// 이름 끝 숫자 기준 오름차순 정렬 (9 < 10 < 11 ... 올바른 숫자 순서)
 	SlotActors.Sort([](const AActor& A, const AActor& B)
 	{
-		return A.GetActorLabel() < B.GetActorLabel();
+		auto ExtractTrailingNumber = [](const FString& Label) -> int32
+		{
+			int32 i = Label.Len() - 1;
+			while (i >= 0 && FChar::IsDigit(Label[i])) i--;
+			return FCString::Atoi(*Label.Mid(i + 1));
+		};
+		return ExtractTrailingNumber(A.GetActorLabel()) < ExtractTrailingNumber(B.GetActorLabel());
 	});
 
 	// 각 자식에게 Shelf/Floor/Slot 설정
