@@ -145,7 +145,7 @@ namespace WarehouseWinForms
             Controls.Add(topPanel);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "창고 관리 시스템";
+            Text = " ";
             topPanel.ResumeLayout(false);
             botPanel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGrid).EndInit();
