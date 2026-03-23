@@ -152,7 +152,107 @@ WinForms → REST API 호출 → 서버
 
 ---
 
+## 코드 개념 설명
+
+### async / await
+
+`async/await`는 **시간이 걸리는 작업(네트워크 요청, DB 쿼리 등)을 기다리는 동안 프로그램이 멈추지 않게** 해주는 문법이다.
+
+#### 왜 필요한가?
+
+서버에 HTTP 요청을 보내면 응답이 올 때까지 시간이 걸린다.
+`await` 없이 그냥 기다리면 그 사이에 UI가 얼어붙어 사용자가 아무것도 못 한다.
+
+```
+일반 방식 (동기):
+요청 보냄 → [UI 멈춤 ⏳] → 응답 도착 → 다음 코드 실행
+
+async/await 방식 (비동기):
+요청 보냄 → [UI 정상 작동 ✅] → 응답 도착 → 다음 코드 실행
+```
+
+#### WinForms에서의 사용 예 (`ApiService.cs`)
+
+```cs
+// async : 이 메서드 안에서 await를 쓸 수 있다는 선언
+public async Task<List<ContainerModel>> GetAllAsync()
+{
+    // await : 응답이 올 때까지 기다리되, 그 동안 UI는 살아있음
+    var json = await _http.GetStringAsync($"{BASE}/containers");
+    return JsonConvert.DeserializeObject<List<ContainerModel>>(json) ?? new();
+}
+```
+
+- `async`가 붙은 메서드는 반환 타입이 `Task` 또는 `Task<T>`가 된다
+- `await`는 `async` 메서드 안에서만 쓸 수 있다
+- 호출하는 쪽에서도 `await`를 붙여야 결과를 기다린다
+
+```cs
+// Form1.cs
+_containers = await _api.GetAllAsync(); // 응답 올 때까지 대기 후 결과 저장
+```
+
+#### Node.js에서의 사용 예 (`server.js`)
+
+Node.js도 동일한 개념으로, DB 쿼리가 끝날 때까지 기다릴 때 쓴다.
+
+```js
+app.post('/containers', async (req, res) => {
+    // await : DB 쿼리가 완료될 때까지 대기
+    await db.query('INSERT INTO containers ...', [...]);
+    res.json({ success: true });
+});
+```
+
+#### Unity에서의 차이점
+
+Unity는 `async/await` 대신 **코루틴(IEnumerator + yield return)** 을 써서 같은 효과를 낸다.
+
+```cs
+// Unity 방식 (코루틴)
+yield return req.SendWebRequest(); // 응답 올 때까지 대기 (게임은 계속 실행)
+
+// C# 일반 방식 (async/await)
+var result = await httpClient.GetAsync(url);
+```
+
+---
+
 ## 개발 일지
+
+### 2026-03-20 — 버그 수정: 컨테이너 이동 시 유니티 오브젝트 중복 생성
+
+**현상**
+
+WinForms에서 컨테이너를 A-0-0 → B-0-0으로 이동하면 Unity 씬에서 A-0-0과 B-0-0 양쪽에 동시에 박스가 존재하는 문제 발생.
+
+**원인**
+
+`WarehouseLoader.OnRefresh()`의 슬롯 비우기 조건이 **컨테이너 ID 기반**이었음.
+
+```cs
+// 버그 코드: ID가 DB에 있으면 위치 상관없이 슬롯을 안 비움
+var dbIds = new HashSet<string>();
+if (!slot.IsEmpty && !dbIds.Contains(slot.container.containerId))
+    slot.ClearContainer();
+```
+
+CNT-001이 B-0-0으로 이동해도 `dbIds`에 CNT-001이 존재하기 때문에, A-0-0 슬롯이 비워지지 않고 그대로 남아 있었음.
+
+**수정**
+
+비교 기준을 **컨테이너 ID → 슬롯 키(shelf_floor_slot)** 로 변경.
+
+```cs
+// 수정 코드: DB에서 점유 중인 슬롯 키 목록에 없으면 비움
+var dbSlotKeys = new HashSet<string>();
+if (!kvp.Value.IsEmpty && !dbSlotKeys.Contains(kvp.Key))
+    kvp.Value.ClearContainer();
+```
+
+A-0-0은 DB 점유 슬롯 목록에 없으므로 정상적으로 비워짐.
+
+---
 
 ### 2026-03-18 — WinForms 대시보드 재작성 (Visual Studio 2022)
 

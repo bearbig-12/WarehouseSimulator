@@ -52,14 +52,14 @@ namespace UnityWarehouseSceneHDRP
         // 폴링: DB 상태와 씬 동기화
         private void OnRefresh(ContainerData[] containers)
         {
-            var slotMap   = BuildSlotMap();
-            var dbIds     = new HashSet<string>();
+            var slotMap    = BuildSlotMap();
+            var dbSlotKeys = new HashSet<string>();
 
             // DB에 있는 컨테이너 반영
             foreach (var data in containers)
             {
-                dbIds.Add(data.containerId);
                 string key = $"{data.shelf}_{data.floor}_{data.slot}";
+                dbSlotKeys.Add(key);
                 if (!slotMap.TryGetValue(key, out PalletSlot slot)) continue;
 
                 // 같은 컨테이너면 스킵, 다르면 갱신
@@ -67,11 +67,11 @@ namespace UnityWarehouseSceneHDRP
                 slot.LoadContainer(data);
             }
 
-            // DB에 없는 컨테이너는 슬롯에서 제거
-            foreach (var slot in slotMap.Values)
+            // DB에 컨테이너가 없는 슬롯은 비우기
+            foreach (var kvp in slotMap)
             {
-                if (!slot.IsEmpty && !dbIds.Contains(slot.container.containerId))
-                    slot.ClearContainer();
+                if (!kvp.Value.IsEmpty && !dbSlotKeys.Contains(kvp.Key))
+                    kvp.Value.ClearContainer();
             }
         }
 

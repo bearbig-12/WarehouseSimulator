@@ -115,3 +115,11 @@ InitTestScene*.unity*
 WarehouseWinForms/bin/
 WarehouseWinForms/obj/
 WarehouseWinForms/.vs/
+
+# Unreal Engine 5
+WarehouseSimulatorUE/Binaries/
+WarehouseSimulatorUE/Intermediate/
+WarehouseSimulatorUE/Saved/
+WarehouseSimulatorUE/DerivedDataCache/
+WarehouseSimulatorUE/*.sln
+WarehouseSimulatorUE/.vs/
