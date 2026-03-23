@@ -1,4 +1,5 @@
-using SocketIOClient;
+using System.Net.WebSockets;
+using System.Text;
 using WarehouseWinForms.Forms;
 using WarehouseWinForms.Models;
 using WarehouseWinForms.Services;
@@ -8,7 +9,8 @@ namespace WarehouseWinForms
     public partial class Form1 : Form
     {
         private readonly ApiService _api = new();
-        private SocketIOClient.SocketIO? _socket;
+        private ClientWebSocket? _ws;
+        private CancellationTokenSource _wsCts = new();
         private List<ContainerModel> _containers = new();
 
         public Form1()
@@ -89,39 +91,50 @@ namespace WarehouseWinForms
             col.FillWeight = fillWeight;
         }
 
-        // ── Socket.io 연결 ───────────────────────────
+        // ── WebSocket 연결 ───────────────────────────
         private async Task ConnectSocketAsync()
         {
-            _socket = new SocketIOClient.SocketIO(new Uri("http://localhost:3000"));
-
-            _socket.OnConnected += (_, _) =>
+            _ws = new ClientWebSocket();
+            try
             {
+                await _ws.ConnectAsync(new Uri("ws://localhost:3000"), _wsCts.Token);
                 SafeInvoke(() =>
                 {
                     lblStatus.Text      = "● 서버 연결됨";
                     lblStatus.ForeColor = Color.LimeGreen;
                 });
-            };
-
-            _socket.OnDisconnected += (_, _) =>
+                _ = ReceiveLoopAsync();
+            }
+            catch
             {
                 SafeInvoke(() =>
                 {
-                    lblStatus.Text      = "● 서버 연결 끊김";
+                    lblStatus.Text      = "● 서버 연결 실패";
                     lblStatus.ForeColor = Color.Red;
                 });
-            };
-
-            _socket.On("containerAdded",   async _ => await OnSocketEventAsync());
-            _socket.On("containerMoved",   async _ => await OnSocketEventAsync());
-            _socket.On("containerRemoved", async _ => await OnSocketEventAsync());
-
-            try { await _socket.ConnectAsync(); }
-            catch
-            {
-                lblStatus.Text      = "● 서버 연결 실패";
-                lblStatus.ForeColor = Color.Red;
             }
+        }
+
+        private async Task ReceiveLoopAsync()
+        {
+            var buffer = new byte[4096];
+            try
+            {
+                while (_ws?.State == WebSocketState.Open)
+                {
+                    var result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _wsCts.Token);
+                    if (result.MessageType == WebSocketMessageType.Close) break;
+                    // containerAdded / containerMoved / containerRemoved 어떤 이벤트든 새로고침
+                    await OnSocketEventAsync();
+                }
+            }
+            catch { }
+
+            SafeInvoke(() =>
+            {
+                lblStatus.Text      = "● 서버 연결 끊김";
+                lblStatus.ForeColor = Color.Red;
+            });
         }
 
         // ── 버튼 활성화 ──────────────────────────────
@@ -158,6 +171,23 @@ namespace WarehouseWinForms
             if (exists)
             {
                 MessageBox.Show($"{dlg.Result!.ContainerId} 은(는) 이미 존재합니다.", "중복 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 슬롯 중복 체크
+            bool slotOccupied = false;
+            foreach (var x in _containers)
+            {
+                if (x.Shelf == dlg.Result!.Shelf && x.Floor == dlg.Result.Floor && x.Slot == dlg.Result.Slot)
+                {
+                    slotOccupied = true;
+                    break;
+                }
+            }
+
+            if (slotOccupied)
+            {
+                MessageBox.Show("해당 슬롯에 이미 컨테이너가 있습니다.", "슬롯 중복", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -231,7 +261,8 @@ namespace WarehouseWinForms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            _socket?.DisconnectAsync();
+            _wsCts.Cancel();
+            _ws?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
             base.OnFormClosing(e);
         }
     }
