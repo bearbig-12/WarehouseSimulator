@@ -115,6 +115,32 @@ WarehouseSimulatorUE/
 
 ## 서버 실행 방법
 
+### 1. 환경 변수 설정 (.env)
+
+서버는 MySQL 접속 정보를 `.env` 파일에서 읽는다. `.env` 파일은 보안상 GitHub에 올리지 않으므로 직접 생성해야 한다.
+
+```bash
+cd Server
+cp .env.example .env   # Windows: copy .env.example .env
+```
+
+`.env` 파일을 열어 비밀번호 입력:
+```
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=본인_MySQL_비밀번호
+DB_NAME=warehouse_db
+PORT=3000
+```
+
+> **왜 .env를 쓰는가?**
+> 비밀번호를 코드에 직접 적으면 GitHub에 올라가 유출될 수 있다.
+> `.env`는 로컬에만 존재하고 `.gitignore`로 업로드를 차단한다.
+> 팀원은 `.env.example`을 보고 어떤 값이 필요한지 파악한 뒤 자신의 `.env`를 만든다.
+> 이것이 현업에서 표준으로 사용하는 방식이다.
+
+### 2. 서버 실행
+
 ```bash
 cd Server
 node server.js
