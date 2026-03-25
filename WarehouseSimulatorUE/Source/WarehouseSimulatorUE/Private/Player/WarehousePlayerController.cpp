@@ -4,6 +4,7 @@
 #include "UI/WarehousePopupWidget.h"
 #include "Warehouse/PalletSlot.h"
 #include "Blueprint/UserWidget.h"
+#include "Engine/EngineTypes.h"
 
 void AWarehousePlayerController::BeginPlay()
 {
@@ -35,7 +36,7 @@ void AWarehousePlayerController::OnLeftClick()
 	if (!PopupWidget) { UE_LOG(LogTemp, Warning, TEXT("[Click] PopupWidget is null")); return; }
 
 	FHitResult Hit;
-	if (!GetHitResultUnderCursorByChannel(TraceTypeQuery1, false, Hit))
+	if (!GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), false, Hit))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Click] No hit result"));
 		return;
