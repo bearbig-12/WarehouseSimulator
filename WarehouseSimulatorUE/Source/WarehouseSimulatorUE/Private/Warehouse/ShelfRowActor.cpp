@@ -36,7 +36,7 @@ void AShelfRowActor::BeginPlay()
 		{
 			SlotComp->Shelf = Shelf;
 			SlotComp->Floor = Floor;
-			SlotComp->Slot  = i;
+			SlotComp->SlotIndex = i;
 		}
 	}
 

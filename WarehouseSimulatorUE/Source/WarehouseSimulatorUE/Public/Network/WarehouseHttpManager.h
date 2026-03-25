@@ -22,7 +22,7 @@ struct FContainerData
 	UPROPERTY(BlueprintReadWrite) FString ArrivalDate;
 	UPROPERTY(BlueprintReadWrite) FString Shelf;
 	UPROPERTY(BlueprintReadWrite) int32   Floor       = 0;
-	UPROPERTY(BlueprintReadWrite) int32   Slot        = 0;
+	UPROPERTY(BlueprintReadWrite) int32   SlotIndex   = 0;
 	UPROPERTY(BlueprintReadWrite) float   Width       = 1.f;
 	UPROPERTY(BlueprintReadWrite) float   Depth       = 1.f;
 	UPROPERTY(BlueprintReadWrite) float   Height      = 1.f;

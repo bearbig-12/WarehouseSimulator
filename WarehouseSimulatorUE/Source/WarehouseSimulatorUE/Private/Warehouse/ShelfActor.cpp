@@ -19,7 +19,7 @@ void AShelfActor::BeginPlay()
 			UPalletSlot* Slot = NewObject<UPalletSlot>(this);
 			Slot->Shelf = ShelfLabel;
 			Slot->Floor = f;
-			Slot->Slot  = s;
+			Slot->SlotIndex = s;
 
 			// 슬롯 월드 위치 계산 (X: 슬롯 방향, Z: 층 높이)
 			FVector LocalOffset(s * SlotSpacingX, 0.f, f * FloorSpacingZ);

@@ -122,5 +122,5 @@ void UPalletSlot::ClearContainer()
 // 슬롯 키 반환 (예: "A_0_3")
 FString UPalletSlot::GetSlotKey() const
 {
-	return FString::Printf(TEXT("%s_%d_%d"), *Shelf, Floor, Slot);
+	return FString::Printf(TEXT("%s_%d_%d"), *Shelf, Floor, SlotIndex);
 }

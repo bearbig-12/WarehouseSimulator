@@ -1,6 +1,6 @@
 # Warehouse Simulator
 
-Unity HDRP 기반 창고 시뮬레이터 프로젝트
+Unity HDRP 기반 창고 시뮬레이터 + Unreal Engine 5 포팅 프로젝트
 
 ---
 
@@ -8,7 +8,10 @@ Unity HDRP 기반 창고 시뮬레이터 프로젝트
 
 ```
 WarehouseSimulator/
-└── Warehouse/          # Unity 프로젝트 (HDRP, Unity 2022.3.62f1)
+├── Warehouse/               # Unity 프로젝트 (HDRP, Unity 2022.3.62f1)
+├── WarehouseWinForms/       # WinForms 관리 앱 (.NET 8, Visual Studio 2022)
+├── Server/                  # Node.js + Express API 서버
+└── WarehouseSimulatorUE/    # Unreal Engine 5.5.4 포팅 프로젝트
 ```
 
 ### 씬 구성
@@ -31,18 +34,82 @@ WarehouseSimulator/
 WinForms 앱 ──── REST API ──────────┐
                                     ↓
 Unity (씬)                    Node.js + Express 서버 (포트 3000)
-    └─ PalletSlot + BoxVisualizer        ↕ socket.io (실시간)
+    └─ PalletSlot + BoxVisualizer        ↕ WebSocket (실시간)
          ↓ 입고 / 이동 / 출고 이벤트  WinForms (실시간 반영)
     DatabaseManager (UnityWebRequest)
          ↓ HTTP REST API              ↓
     Node.js + Express 서버       MySQL DB (warehouse_db)
+
+UE5 (씬)
+    └─ PalletSlot (UActorComponent)
+         ↓ 입고 / 이동 / 출고 이벤트
+    WarehouseHttpManager (REST API)
+    WarehouseWebSocketManager (WebSocket 실시간 동기화)
 ```
 
-- **Unity → WinForms**: Unity에서 조작 시 REST API 호출 → 서버가 socket.io emit → WinForms 실시간 갱신
-- **WinForms → Unity**: WinForms에서 조작 시 REST API 호출 → Unity가 3초마다 폴링으로 반영
+- **Unity → WinForms**: Unity에서 조작 시 REST API 호출 → 서버가 WebSocket emit → WinForms 실시간 갱신
+- **WinForms → Unity/UE5**: WinForms에서 조작 시 REST API 호출 → 서버가 WebSocket으로 push → 즉시 갱신
+- **UE5 ↔ 서버**: WebSocket 양방향 실시간 동기화
 
-> Unity에서 MySQL을 직접 연결하지 않고 중간에 API 서버를 두는 방식 채택
+> Unity/UE5에서 MySQL을 직접 연결하지 않고 중간에 API 서버를 두는 방식 채택
 > 이유는 아래 트러블슈팅 참고
+
+---
+
+## Unreal Engine 5 포팅
+
+### 개요
+
+Unity C# 프로젝트를 UE 5.5.4 C++로 포팅. 동일한 Node.js 서버 + MySQL DB를 공유하며 WebSocket으로 실시간 동기화.
+
+### 프로젝트 구조
+
+```
+WarehouseSimulatorUE/
+├── Source/WarehouseSimulatorUE/
+│   ├── Public/
+│   │   ├── Network/
+│   │   │   ├── WarehouseHttpManager.h      # REST API 호출
+│   │   │   └── WarehouseWebSocketManager.h # WebSocket 실시간 동기화
+│   │   ├── Warehouse/
+│   │   │   ├── PalletSlot.h               # 팔레트 슬롯 상태 및 컨테이너 관리
+│   │   │   ├── ShelfActor.h               # 선반 액터
+│   │   │   ├── ShelfRowActor.h            # 선반 행 액터 (슬롯 정렬 포함)
+│   │   │   └── WarehouseLoader.h          # 게임 시작 시 DB 복원 + WebSocket 동기화
+│   │   ├── Player/
+│   │   │   └── WarehousePlayerController.h # 마우스 클릭 처리
+│   │   └── UI/
+│   │       └── WarehousePopupWidget.h      # 팝업 UI (입고/이동/출하)
+│   └── Private/ (위와 동일 구조, .cpp 파일)
+└── Content/Blueprints/
+    ├── BP_WarehousePlayerController        # PlayerController Blueprint
+    ├── Input/
+    │   ├── IA_Click.uasset                 # Enhanced Input Action (마우스 클릭)
+    │   └── IMC_Warehouse.uasset            # Input Mapping Context
+    └── UI/
+        └── WBP_SlotPopup.uasset            # 팝업 Widget Blueprint
+```
+
+### Unity → UE5 클래스 매핑
+
+| Unity C# | UE5 C++ | 역할 |
+|---|---|---|
+| `PalletSlot.cs` | `UPalletSlot` (UActorComponent) | 팔레트 슬롯 상태 관리 |
+| `BoxVisualizer.cs` | `UPalletSlot` (통합) | 컨테이너 오브젝트 생성/제거 |
+| `BoxPool.cs` | `ABoxPool` (AActor) | 오브젝트 풀링 |
+| `WarehouseUI.cs` | `UWarehousePopupWidget` (UUserWidget) | 팝업 UI |
+| `PalletClickHandler.cs` | `AWarehousePlayerController` | 마우스 클릭 처리 |
+| `WarehouseLoader.cs` | `UWarehouseLoader` (UActorComponent) | DB 복원 + 동기화 |
+| `DatabaseManager.cs` | `UWarehouseHttpManager` | REST API 호출 |
+| — | `UWarehouseWebSocketManager` | WebSocket 실시간 동기화 |
+
+### 실행 방법
+
+1. Node.js 서버 실행 (`cd Server && node server.js`)
+2. UE 에디터에서 `WarehouseLevel` 열기
+3. World Settings → GameMode → `BP_WarehouseGameMode` 확인
+4. Play 버튼으로 실행
+5. 팔레트 클릭 → 팝업에서 입고/이동/출하
 
 ---
 
