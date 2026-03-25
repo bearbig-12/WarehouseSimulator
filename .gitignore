@@ -122,3 +122,5 @@ WarehouseSimulatorUE/Saved/
 WarehouseSimulatorUE/DerivedDataCache/
 WarehouseSimulatorUE/*.sln
 WarehouseSimulatorUE/.vs/
+
+Server/.env

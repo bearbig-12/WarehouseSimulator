@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express    = require('express');
 const mysql      = require('mysql2/promise');
 const cors       = require('cors');
@@ -14,12 +15,11 @@ const wss = new WebSocket.Server({ server });
 app.use(cors());
 app.use(express.json());
 
-// MySQL 연결 설정 - password 본인 비밀번호로 변경
 const db = mysql.createPool({
-    host:     'localhost',
-    user:     'root',
-    password: 'ahat0163@@',
-    database: 'warehouse_db'
+    host:     process.env.DB_HOST     || 'localhost',
+    user:     process.env.DB_USER     || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME     || 'warehouse_db'
 });
 
 // 연결된 모든 클라이언트에게 이벤트 브로드캐스트
@@ -131,7 +131,7 @@ wss.on('connection', (ws) => {
 // ───────────────────────────────────────────
 // 서버 시작
 // ───────────────────────────────────────────
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
