@@ -51,7 +51,7 @@ void UWarehouseHttpManager::AddContainer(const FContainerData& Data)
 	Json->SetStringField(TEXT("arrival_date"),  Data.ArrivalDate);
 	Json->SetStringField(TEXT("shelf"),         Data.Shelf);
 	Json->SetNumberField(TEXT("floor"),         Data.Floor);
-	Json->SetNumberField(TEXT("slot"),          Data.Slot);
+	Json->SetNumberField(TEXT("slot"),          Data.SlotIndex);
 	Json->SetNumberField(TEXT("width"),         Data.Width);
 	Json->SetNumberField(TEXT("depth"),         Data.Depth);
 	Json->SetNumberField(TEXT("height"),        Data.Height);
@@ -149,7 +149,7 @@ TArray<FContainerData> UWarehouseHttpManager::ParseContainerArray(const FString&
 		D.ArrivalDate = Obj->GetStringField(TEXT("arrival_date"));
 		D.Shelf       = Obj->GetStringField(TEXT("shelf"));
 		D.Floor       = (int32)Obj->GetNumberField(TEXT("floor"));
-		D.Slot        = (int32)Obj->GetNumberField(TEXT("slot"));
+		D.SlotIndex   = (int32)Obj->GetNumberField(TEXT("slot"));
 		D.Width       = Obj->HasField(TEXT("width"))  ? (float)Obj->GetNumberField(TEXT("width"))  : 1.f;
 		D.Depth       = Obj->HasField(TEXT("depth"))  ? (float)Obj->GetNumberField(TEXT("depth"))  : 1.f;
 		D.Height      = Obj->HasField(TEXT("height")) ? (float)Obj->GetNumberField(TEXT("height")) : 1.f;

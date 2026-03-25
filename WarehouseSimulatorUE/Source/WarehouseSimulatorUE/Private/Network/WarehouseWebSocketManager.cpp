@@ -92,7 +92,7 @@ void UWarehouseWebSocketManager::OnMessage(const FString& Message)
 		double Tmp = 0;
 		if ((*DataObj)->TryGetNumberField(TEXT("weight"), Tmp)) D.Weight = (float)Tmp;
 		if ((*DataObj)->TryGetNumberField(TEXT("floor"),  Tmp)) D.Floor  = (int32)Tmp;
-		if ((*DataObj)->TryGetNumberField(TEXT("slot"),   Tmp)) D.Slot   = (int32)Tmp;
+		if ((*DataObj)->TryGetNumberField(TEXT("slot"),   Tmp)) D.SlotIndex = (int32)Tmp;
 		if ((*DataObj)->TryGetNumberField(TEXT("width"),  Tmp)) D.Width  = (float)Tmp;
 		if ((*DataObj)->TryGetNumberField(TEXT("depth"),  Tmp)) D.Depth  = (float)Tmp;
 		if ((*DataObj)->TryGetNumberField(TEXT("height"), Tmp)) D.Height = (float)Tmp;
@@ -105,7 +105,7 @@ void UWarehouseWebSocketManager::OnMessage(const FString& Message)
 		(*DataObj)->TryGetStringField(TEXT("shelf"),        D.Shelf);
 		double Tmp = 0;
 		if ((*DataObj)->TryGetNumberField(TEXT("floor"), Tmp)) D.Floor = (int32)Tmp;
-		if ((*DataObj)->TryGetNumberField(TEXT("slot"),  Tmp)) D.Slot  = (int32)Tmp;
+		if ((*DataObj)->TryGetNumberField(TEXT("slot"),  Tmp)) D.SlotIndex = (int32)Tmp;
 		OnContainerMoved.Broadcast(D);
 	}
 	else if (Event == TEXT("containerRemoved") && Root->TryGetObjectField(TEXT("data"), DataObj))

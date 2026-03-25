@@ -29,7 +29,7 @@ public:
 	int32 Floor = 0; // 0/1/2
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Warehouse|Slot")
-	int32 Slot = 0;  // 0~7
+	int32 SlotIndex = 0;  // 0~7
 
 	// 현재 슬롯에 있는 컨테이너 데이터
 	UPROPERTY(BlueprintReadOnly, Category="Warehouse|Slot")

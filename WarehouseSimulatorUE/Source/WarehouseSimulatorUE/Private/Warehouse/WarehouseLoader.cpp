@@ -93,7 +93,7 @@ void AWarehouseLoader::OnContainersLoaded(const TArray<FContainerData>& Containe
 	// DB에서 점유 중인 슬롯 키 목록
 	TSet<FString> DBSlotKeys;
 	for (const FContainerData& D : Containers)
-		DBSlotKeys.Add(FString::Printf(TEXT("%s_%d_%d"), *D.Shelf, D.Floor, D.Slot));
+		DBSlotKeys.Add(FString::Printf(TEXT("%s_%d_%d"), *D.Shelf, D.Floor, D.SlotIndex));
 
 	// DB에 없는 슬롯은 비우기
 	for (auto& Pair : SlotMap)
@@ -106,7 +106,7 @@ void AWarehouseLoader::OnContainersLoaded(const TArray<FContainerData>& Containe
 	// DB에 있는 컨테이너 슬롯에 복원
 	for (const FContainerData& D : Containers)
 	{
-		FString Key = FString::Printf(TEXT("%s_%d_%d"), *D.Shelf, D.Floor, D.Slot);
+		FString Key = FString::Printf(TEXT("%s_%d_%d"), *D.Shelf, D.Floor, D.SlotIndex);
 		UPalletSlot** SlotPtr = SlotMap.Find(Key);
 		if (!SlotPtr) continue;
 
@@ -123,7 +123,7 @@ void AWarehouseLoader::OnContainersLoaded(const TArray<FContainerData>& Containe
 // ─────────────────────────────────────────────────────────
 void AWarehouseLoader::OnWSContainerAdded(FContainerData Data)
 {
-	FString Key = FString::Printf(TEXT("%s_%d_%d"), *Data.Shelf, Data.Floor, Data.Slot);
+	FString Key = FString::Printf(TEXT("%s_%d_%d"), *Data.Shelf, Data.Floor, Data.SlotIndex);
 	UPalletSlot** SlotPtr = SlotMap.Find(Key);
 	if (!SlotPtr) return;
 
@@ -152,9 +152,9 @@ void AWarehouseLoader::OnWSContainerMoved(FContainerData Data)
 	// 새 위치로 업데이트 후 로드
 	FullData.Shelf = Data.Shelf;
 	FullData.Floor = Data.Floor;
-	FullData.Slot  = Data.Slot;
+	FullData.SlotIndex = Data.SlotIndex;
 
-	FString Key = FString::Printf(TEXT("%s_%d_%d"), *FullData.Shelf, FullData.Floor, FullData.Slot);
+	FString Key = FString::Printf(TEXT("%s_%d_%d"), *FullData.Shelf, FullData.Floor, FullData.SlotIndex);
 	UPalletSlot** SlotPtr = SlotMap.Find(Key);
 	if (SlotPtr)
 		(*SlotPtr)->LoadContainer(FullData);
