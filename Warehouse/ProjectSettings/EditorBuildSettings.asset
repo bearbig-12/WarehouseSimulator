@@ -8,4 +8,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/OutdoorsScene.unity
     guid: 8124e5870f4fd4c779e7a5f994e84ad1
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 7081e0de6e93efc4c8cb139336ca6652,
+      type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: c74d97658cc31af4f80b62f7d667b915,
+      type: 2}

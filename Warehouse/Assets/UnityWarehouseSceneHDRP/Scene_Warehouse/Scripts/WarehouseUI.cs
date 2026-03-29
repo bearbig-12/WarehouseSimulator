@@ -36,11 +36,11 @@ namespace UnityWarehouseSceneHDRP
         [SerializeField] private Button btnClose;      // 닫기
 
         [Header("입력 잠금 대상")]
-        [SerializeField] private MonoBehaviour cameraMove;        // CameraMove 컴포넌트
-        [SerializeField] private MonoBehaviour palletClickHandler; // PalletClickHandler 컴포넌트
+        [SerializeField] private MonoBehaviour palletClickHandler;   // PalletClickHandler 컴포넌트
 
         private PalletSlot _currentSlot;
         private PalletSlot _moveSourceSlot;   // 이동 중일 때 출발 슬롯
+        private bool       _blockPalletClick; // 팔렛 클릭 차단 여부
 
         private void Awake()
         {
@@ -68,6 +68,9 @@ namespace UnityWarehouseSceneHDRP
                 ClosePopup();
                 return;
             }
+
+            // 팔렛 클릭 차단 중이면 무시 (입력 필드 초기화 방지)
+            if (_blockPalletClick) return;
 
             _currentSlot = slot;
             titleText.text = $"슬롯: {slot.shelf}-{slot.floor}-{slot.slot}";
@@ -98,6 +101,7 @@ namespace UnityWarehouseSceneHDRP
             }
 
             popupPanel.SetActive(true);
+            _blockPalletClick = true;
             SetInputLock(true);
         }
 
@@ -152,8 +156,9 @@ namespace UnityWarehouseSceneHDRP
         // 이동 (첫 번째 클릭 → 두 번째 클릭으로 목적지 선택)
         private void OnMove()
         {
-            _moveSourceSlot = _currentSlot;
-            titleText.text  = "이동할 목적지 팔레트를 클릭하세요";
+            _moveSourceSlot   = _currentSlot;
+            _blockPalletClick = false; // 목적지 팔렛 클릭 허용
+            titleText.text    = "이동할 목적지 팔레트를 클릭하세요";
             btnMove.gameObject.SetActive(false);
             btnOutgoing.gameObject.SetActive(false);
             btnClose.gameObject.SetActive(true);
@@ -168,14 +173,14 @@ namespace UnityWarehouseSceneHDRP
 
         private void ClosePopup()
         {
-            _moveSourceSlot = null;
+            _moveSourceSlot   = null;
+            _blockPalletClick = false;
             popupPanel.SetActive(false);
             SetInputLock(false);
         }
 
         private void SetInputLock(bool locked)
         {
-            if (cameraMove        != null) cameraMove.enabled        = !locked;
             if (palletClickHandler != null) palletClickHandler.enabled = !locked;
         }
     }
