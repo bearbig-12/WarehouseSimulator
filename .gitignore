@@ -124,3 +124,13 @@ WarehouseSimulatorUE/*.sln
 WarehouseSimulatorUE/.vs/
 
 Server/.env
+
+# Claude
+CLAUDE.md
+**/CLAUDE.md
+
+# Claude
+CLAUDE.md
+**/CLAUDE.md
+.claude/
+**/.claude/
