@@ -2,6 +2,8 @@
 
 Unity HDRP 기반 창고 시뮬레이터 + Unreal Engine 5 포팅 프로젝트
 
+시현 영상 링크 : https://youtu.be/7UPrB4BOe0k
+
 ---
 
 ## 프로젝트 구조
