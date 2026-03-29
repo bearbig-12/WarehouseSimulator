@@ -202,6 +202,7 @@ ADD COLUMN height FLOAT DEFAULT 1.0;
 | `WarehouseLoader.cs` | Scene_Warehouse/Scripts | 게임 시작 시 DB 복원 + 3초 폴링 동기화 |
 | `PalletSlotSetup.cs` | Scene_Warehouse/Editor | 에디터 툴: 팔레트 컴포넌트 일괄 설정 |
 | `CameraMove.cs` | Player/Scripts | 1인칭 카메라 이동 (WASD + 마우스) |
+| `PalletVRInteractable.cs` | Scene_Warehouse/Scripts | VR 카메라 시선 레이캐스트로 팔레트 선택 |
 
 ---
 
@@ -312,6 +313,23 @@ var result = await httpClient.GetAsync(url);
 ---
 
 ## 개발 일지
+
+### 2026-03-29 — VR 인터랙션 입력 처리 개선
+
+**추가된 기능**
+
+- `PalletVRInteractable.cs` 신규 작성: VR 모드에서 카메라 시선 방향 레이캐스트로 팔레트 선택
+- OpenXR 패키지 (`com.unity.xr.openxr` 1.14.3) 및 XR Interaction Toolkit 2.6.5 추가
+- XR Interaction Toolkit Starter Assets / XR Device Simulator 샘플 추가
+- `OutdoorsScene`에 XR Origin (XR Rig) 구성
+
+**버그 수정**
+
+- 팝업이 열린 상태에서 입력 필드 클릭 시 팔레트 레이캐스트가 발동되어 기입력 내용이 초기화되는 버그 수정
+  - `PalletClickHandler` / `PalletVRInteractable`에 `EventSystem.IsPointerOverGameObject()` 체크 추가 → UI 위 클릭 시 레이캐스트 차단
+  - `WarehouseUI`에 `_blockPalletClick` 플래그 추가 — 팝업 오픈 시 팔레트 클릭 차단, 이동 모드(`OnMove`) 진입 시 해제하여 목적지 팔레트 선택 허용
+
+---
 
 ### 2026-03-20 — 버그 수정: 컨테이너 이동 시 유니티 오브젝트 중복 생성
 
